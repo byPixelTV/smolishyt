@@ -1,25 +1,19 @@
 import { YouTube } from "youtube-sr";
 import type { YoutubeVideo } from "../../types/YoutubeVideo.js";
+import { config } from "../smolish/config.js";
 
 function getRandomSearchQuery(): string {
-    const randomWords = [
-        "vlog", "edit", "build", "review", "clip", "fail", "setup",
-        "stream", "setup", "animation", "cover", "speedrun", "asmr",
-		"facedev", "tech", "code", "ai-turtle", "reddit"
-    ];
+    const randomWords = config.tags;
 
-    if (Math.random() > 0.5) {
-        const word = randomWords[Math.floor(Math.random() * randomWords.length)];
-        const noise = Math.random().toString(36).substring(2, 5);
-        return `${word} ${noise}`;
-    } else {
-        return Math.random().toString(36).substring(2, 6);
-    }
+	const word = randomWords[Math.floor(Math.random() * randomWords.length)];
+	const noise = Math.random().toString(36).substring(2, 5);
+	return `${word} ${noise}`;
 }
 
 export async function getVideo(): Promise<YoutubeVideo | null> {
     try {
         const query = `${getRandomSearchQuery()} #shorts`;
+		console.log(`log: query ${query}`);
 
         const results = await YouTube.search(query, {
             limit: 10,
