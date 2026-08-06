@@ -1,5 +1,6 @@
 import type { YoutubeVideo } from "../../types/YoutubeVideo.js";
 import { config, headers } from "./config.js";
+import { gotScraping } from "got-scraping";
 
 export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 	const result: {
@@ -32,8 +33,7 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 		const buffer = await video.arrayBuffer();
 		const bytes = new Uint8Array(buffer);
 
-		const create = await fetch(`${config.baseUrl}/api/videos`, {
-			method: 'POST',
+		const create = await gotScraping.post(`${config.baseUrl}/api/videos`, {
 			body: JSON.stringify({
 				filename: video.name,
 				sizeBytes: video.size,
@@ -42,7 +42,12 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 			headers: headers,
 		});
 
-		const createJson = await create.json() as any;
+		if (!create.ok) {
+			console.error(`error: create status ${create.statusCode} ${create.body}`);
+			process.exit(1);
+		}
+
+		const createJson = JSON.parse(create.body);
 		console.log('log: create json', createJson);
 
 		const videoId = createJson.video.id;
@@ -53,12 +58,11 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 
 		result.videoId = videoId;
 
-		const parts = await fetch(`${config.baseUrl}/api/videos/${videoId}/parts`, {
-			method: 'GET',
+		const parts = await gotScraping.get(`${config.baseUrl}/api/videos/${videoId}/parts`, {
 			headers: headers,
 		});
 
-		const partsJson = await parts.json() as any;
+		const partsJson = JSON.parse(parts.body);
 
 		console.log(`log: missing parts ${partsJson.missing}`);
 
@@ -77,34 +81,31 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 			console.log(`log: end ${end}`);
 			console.log(`log: buffer length ${bytes.length}`);
 
-			const uploadRequest = await fetch(`${config.baseUrl}/api/videos/${videoId}/parts`, {
-				method: 'POST',
+			const uploadRequest = await gotScraping.post(`${config.baseUrl}/api/videos/${videoId}/parts`, {
 				body: JSON.stringify({
 					partNumber,
 				}),
 				headers: headers,
 			});
 
-			const uploadJson = await uploadRequest.json() as any;
+			const uploadJson = JSON.parse(uploadRequest.body);
 
 			const uploadUrl = uploadJson.url;
 
 			console.log('log: uploading to R2');
 
-			const upload = await fetch(uploadUrl, {
-				method: 'PUT',
+			const upload = await gotScraping.put(uploadUrl, {
 				body: chunk,
 				headers: {
 					'Content-Length': chunk.length.toString(),
 				},
 			});
 
-			const etag = upload.headers.get('etag');
+			const etag = upload.headers.etag;
 
 			console.log(`log: uploaded ${partNumber} ${etag}`);
 
-			await fetch(`${config.baseUrl}/api/videos/${videoId}/parts`, {
-				method: 'PUT',
+			await gotScraping.put(`${config.baseUrl}/api/videos/${videoId}/parts`, {
 				body: JSON.stringify({
 					partNumber,
 					etag,
@@ -118,7 +119,7 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 
 			result.parts.push({
 				partNumber,
-				etag,
+				etag: etag || null,
 				sizeBytes: chunk.length,
 			});
 
@@ -127,12 +128,11 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 
 		console.log('log: completeing upload');
 
-		const complete = await fetch(`${config.baseUrl}/api/videos/${videoId}/complete`, {
-			method: 'POST',
+		const complete = await gotScraping.post(`${config.baseUrl}/api/videos/${videoId}/complete`, {
 			headers: headers,
 		});
 
-		const completeJson = await complete.json();
+		const completeJson = JSON.parse(complete.body);
 
 		console.log('log: complete json', completeJson);
 
@@ -142,8 +142,7 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 		console.log(`log: description ${youtubeVideo.description}`);
 		console.log(`log: channel: ${youtubeVideo.channel}`);
 
-		const publish = await fetch(`${config.baseUrl}/api/videos/${videoId}`, {
-			method: 'PATCH',
+		const publish = await gotScraping.patch(`${config.baseUrl}/api/videos/${videoId}`, {
 			body: JSON.stringify({
 				title: youtubeVideo.title,
 				description: youtubeVideo.description + `\nOriginally uploaded on YouTube by ${youtubeVideo.channel}`,
@@ -152,7 +151,7 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 			headers: headers,
 		});
 
-		const publishJson = await publish.json();
+		const publishJson = JSON.parse(publish.body);
 
 		console.info(`info: video '${youtubeVideo.title}' published successfully!`);
 
