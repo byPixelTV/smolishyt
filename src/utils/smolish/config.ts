@@ -7,8 +7,14 @@ export const config: SmolishConfig = {
         "stream", "setup", "animation", "cover", "speedrun", "asmr",
 		"facedev", "tech", "code", "ai-turtle", "reddit", "sus", "7elevenz",
 		"genshin impact", "zzz", "zenless zone zero", "anime", "phonk", "dance",
-		"viral", "trending",
+		"viral", "trending", "job", "h1t1", "tyler vitelli", "brazillian phonk",
+		"hisytstory", "his story", "zackdfilms", "zack d films", "sambucha", "mrbeast",
+		"one piece", "naruto", "ddlc", "miku", "hatsune miku", "coding", "programming",
+		"tuff", "tuff edit", "speed", "ishowspeed", "furina genshin impact",
+		"wise zenless zone zero", "belle zenless zone zero", "lumine genshin impact",
+		"anime jiggle physics"
     ],
+	numShorts: 10,
 };
 
 export const headers: Record<string, string> = {
