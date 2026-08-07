@@ -12,7 +12,7 @@ export const config: SmolishConfig = {
 		"one piece", "naruto", "ddlc", "miku", "hatsune miku", "coding", "programming",
 		"tuff", "tuff edit", "speed", "ishowspeed", "furina genshin impact",
 		"wise zenless zone zero", "belle zenless zone zero", "lumine genshin impact",
-		"anime jiggle physics"
+		"anime jiggle physics",
     ],
 	numShorts: 10,
 };
