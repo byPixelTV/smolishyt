@@ -7,23 +7,24 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --env-file=.env ./dist/index.js",
     "dev": "npx tsx --env-file=.env ./src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "channel:dev": "npx tsx --env-file=.env ./src/channel.ts",
+    "channel:start": "node --env-file=.env ./dist/channel.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@types/fluent-ffmpeg": "^2.1.28",
     "@types/node": "^26.1.2",
     "tsx": "^4.23.9",
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "fluent-ffmpeg": "^2.1.3",
     "get-video-duration": "^5.0.0",
     "got-scraping": "^4.2.1",
     "youtube-sr": "^4.3.12",
+    "youtubei.js": "^17.2.0",
     "ytdlp-nodejs": "^3.4.5"
   }
 }

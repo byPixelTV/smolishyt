@@ -2,7 +2,7 @@ import type { YoutubeVideo } from "../../types/YoutubeVideo.js";
 import { config, headers } from "./config.js";
 import { gotScraping } from "got-scraping";
 
-export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
+export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo, exitOnceDone: boolean = true) {
 	const result: {
 		success: boolean;
 		videoId: string | null;
@@ -44,7 +44,7 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 
 		if (!create.ok) {
 			console.error(`error: create status ${create.statusCode} ${create.body}`);
-			process.exit(1);
+			if (exitOnceDone) process.exit(1);
 		}
 
 		const createJson = JSON.parse(create.body);
@@ -160,9 +160,16 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo) {
 			response: publishJson,
 		};
 
-		process.exit(0);
+		if (exitOnceDone) {
+			process.exit(0);
+		}
 	} catch (error) {
 		console.error(`error: ${(error as Error).message}`);
-		process.exit(1);
+		
+		if (exitOnceDone) {
+			process.exit(1);
+		}
+
+		throw error;
 	}
 }
