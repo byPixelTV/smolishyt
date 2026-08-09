@@ -29,6 +29,6 @@ This script is for educational purposes. Do not attempt to bypass Smolish's rate
 
 ## License
 
-smolishyt is licensed under Apache 2.0. Check [LICENST](./LICENSE) for more details.
+smolishyt is licensed under Apache 2.0. Check [LICENSE](./LICENSE) for more details.
 
 © 2026 Ethan Lee
