@@ -30,5 +30,5 @@ export async function getChannelVideos(): Promise<YoutubeVideo[]> {
 		console.log(`log: found video '${title}' by ${channelName}`);
 	}
 
-	return allVideos;
+	return allVideos.reverse();
 }
