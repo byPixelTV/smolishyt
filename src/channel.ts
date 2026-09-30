@@ -1,11 +1,12 @@
 import { getProcessedVideos, getYoutubeVideoKey, setProcessedVideos } from "./utils/data/db.js";
-import { uploadToSmolish } from "./utils/smolish/upload.js";
+import { SmolishRateLimitError, uploadToSmolish } from "./utils/smolish/upload.js";
 import { downloadVideo } from "./utils/youtube/download_video.js";
 import { getChannelVideos } from "./utils/youtube/get_channel_videos.js";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const uploadOnce = process.argv.includes("--once");
 const pollIntervalMs = Number(process.env.CHANNEL_POLL_INTERVAL_MS || 300_000);
+const maxRateLimitRetries = 3;
 const shutdownController = new AbortController();
 let shuttingDown = false;
 
@@ -49,7 +50,20 @@ async function processChannel(): Promise<boolean> {
 		}
 
 		try {
-			await uploadToSmolish(downloaded, video, false);
+			let rateLimitRetries = 0;
+			while (true) {
+				try {
+					await uploadToSmolish(downloaded, video, false);
+					break;
+				} catch (error) {
+					if (!(error instanceof SmolishRateLimitError) || rateLimitRetries >= maxRateLimitRetries || shuttingDown) {
+						throw error;
+					}
+					rateLimitRetries += 1;
+					console.warn(`warn: rate limited; retrying '${video.title}' in ${error.retryAfterSeconds}s (attempt ${rateLimitRetries}/${maxRateLimitRetries})`);
+					await sleep(error.retryAfterSeconds * 1000, undefined, { signal: shutdownController.signal });
+				}
+			}
 			console.info(`info: successfully published video '${video.title}'`);
 			processedVideos.push(getYoutubeVideoKey(video.url));
 			await setProcessedVideos(processedVideos);

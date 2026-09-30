@@ -14,6 +14,13 @@ interface HttpResult {
 	body: string;
 }
 
+export class SmolishRateLimitError extends Error {
+	constructor(public readonly retryAfterSeconds: number, message: string) {
+		super(message);
+		this.name = "SmolishRateLimitError";
+	}
+}
+
 function smolishRequest(
 	url: string,
 	method: "POST" | "PUT" | "PATCH",
@@ -57,6 +64,18 @@ function smolishRequest(
 
 function assertSuccessfulResponse(response: { ok: boolean; statusCode: number; body: string }, step: string): void {
 	if (!response.ok) {
+		if (response.statusCode === 429) {
+			let retryAfterSeconds = 60;
+			const retryMatch = response.body.match(/try again in\s+(\d+)\s*s?/i);
+			if (retryMatch) {
+				retryAfterSeconds = Number(retryMatch[1]);
+			}
+			throw new SmolishRateLimitError(
+				Math.max(1, retryAfterSeconds),
+				`${step} was rate-limited (429): ${response.body}`,
+			);
+		}
+
 		if (response.statusCode === 403) {
 			throw new Error(`${step} was rejected by Cloudflare (403). Refresh COOKIE and BROWSER_USER_AGENT from the same Smolish browser session.`);
 		}
