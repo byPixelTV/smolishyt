@@ -6,10 +6,24 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const uploadOnce = process.argv.includes("--once");
 const pollIntervalMs = Number(process.env.CHANNEL_POLL_INTERVAL_MS || 300_000);
+const shutdownController = new AbortController();
+let shuttingDown = false;
 
 if (!Number.isSafeInteger(pollIntervalMs) || pollIntervalMs <= 0) {
 	throw new Error("CHANNEL_POLL_INTERVAL_MS must be a positive integer");
 }
+
+function requestShutdown(signal: NodeJS.Signals) {
+	if (shuttingDown) {
+		return;
+	}
+	shuttingDown = true;
+	console.log(`log: received ${signal}; finishing the current operation before stopping`);
+	shutdownController.abort();
+}
+
+process.once("SIGINT", () => requestShutdown("SIGINT"));
+process.once("SIGTERM", () => requestShutdown("SIGTERM"));
 
 async function processChannel(): Promise<boolean> {
 	const allVideos = await getChannelVideos();
@@ -18,6 +32,9 @@ async function processChannel(): Promise<boolean> {
 	let uploaded = false;
 
 	for (const video of allVideos) {
+		if (shuttingDown) {
+			break;
+		}
 		if (processedVideos.includes(video.url)) {
 			console.log(`log: already processed video '${video.title}'`);
 			continue;
@@ -50,19 +67,26 @@ async function processChannel(): Promise<boolean> {
 }
 
 async function main() {
-	do {
+	while (!shuttingDown) {
 		let uploaded = false;
 		try {
 			uploaded = await processChannel();
 		} catch (error: unknown) {
 			console.error(`error: channel scan failed: ${(error as Error).message}`);
 		}
-		if (uploadOnce) {
+		if (uploadOnce || shuttingDown) {
 			return;
 		}
 		console.log(`log: channel scan complete (${uploaded ? "uploaded new video" : "no new videos"}); checking again in ${pollIntervalMs}ms`);
-		await sleep(pollIntervalMs);
-	} while (true);
+		try {
+			await sleep(pollIntervalMs, undefined, { signal: shutdownController.signal });
+		} catch (error) {
+			if (!shuttingDown) {
+				throw error;
+			}
+		}
+	}
+	console.log("log: channel uploader stopped");
 }
 
 main().catch((error: unknown) => {

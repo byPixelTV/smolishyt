@@ -57,7 +57,7 @@ Build the image and run the automatic channel uploader:
 docker compose up --build
 ```
 
-The image includes Bun, Node.js, FFmpeg, FFprobe, and yt-dlp. It processes all available unprocessed channel videos and persists state in the local `.smolishyt` directory. To run only one channel upload instead:
+The image includes Bun, Node.js, FFmpeg, FFprobe, and yt-dlp. It processes all available unprocessed channel videos and persists state in the local `.smolishyt` directory. Compose runs the container with the permissions needed for the bind-mounted state directory on Docker Desktop and gives it 30 seconds to finish the current operation during shutdown. To run only one channel upload instead:
 
 ```bash
 docker compose run --rm smolishyt bun --env-file=.env ./dist/channel.js --once
