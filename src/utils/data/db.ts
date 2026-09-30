@@ -5,6 +5,24 @@ import path from "path";
 const processedFilePath = path.join(process.cwd(), '.smolishyt', 'processed.json');
 const channelStateFilePath = path.join(process.cwd(), '.smolishyt', 'channel-state.json');
 
+export function getYoutubeVideoKey(url: string): string {
+	try {
+		const parsed = new URL(url);
+		const id = parsed.searchParams.get('v')
+			|| parsed.pathname.match(/\/(?:shorts|embed|live)\/([^/?]+)/)?.[1]
+			|| (parsed.hostname === 'youtu.be' ? parsed.pathname.slice(1).split('/')[0] : undefined);
+		return id || url;
+	} catch {
+		return url;
+	}
+}
+
+function normalizeProcessedVideos(values: unknown[]): string[] {
+	return [...new Set(values
+		.filter((value): value is string => typeof value === 'string')
+		.map(getYoutubeVideoKey))];
+}
+
 export async function getProcessedVideos(): Promise<string[]> {
 	try {
 		if (!existsSync(processedFilePath)) {
@@ -14,7 +32,7 @@ export async function getProcessedVideos(): Promise<string[]> {
 		const fileText = await readFile(processedFilePath, 'utf8');
 		const parsed: unknown = JSON.parse(fileText);
 		if (Array.isArray(parsed)) {
-			return parsed.filter((value): value is string => typeof value === 'string');
+			return normalizeProcessedVideos(parsed);
 		}
 		if (parsed && typeof parsed === 'object') {
 			const legacy = parsed as { videos?: unknown; processed?: unknown };
@@ -23,7 +41,7 @@ export async function getProcessedVideos(): Promise<string[]> {
 				: Array.isArray(legacy.processed)
 					? legacy.processed
 					: [];
-			return values.filter((value): value is string => typeof value === 'string');
+			return normalizeProcessedVideos(values);
 		}
 		return [];
 	} catch (error) {
@@ -35,7 +53,7 @@ export async function getProcessedVideos(): Promise<string[]> {
 export async function setProcessedVideos(videos: string[]) {
 	try {
 		await mkdir(path.dirname(processedFilePath), { recursive: true });
-		await writeFile(processedFilePath, JSON.stringify(videos));
+		await writeFile(processedFilePath, JSON.stringify(normalizeProcessedVideos(videos)));
 	} catch (error) {
 		console.error(`error: ${(error as Error).message}`);
 	}

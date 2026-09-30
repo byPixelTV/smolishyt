@@ -1,4 +1,4 @@
-import { getProcessedVideos, setProcessedVideos } from "./utils/data/db.js";
+import { getProcessedVideos, getYoutubeVideoKey, setProcessedVideos } from "./utils/data/db.js";
 import { uploadToSmolish } from "./utils/smolish/upload.js";
 import { downloadVideo } from "./utils/youtube/download_video.js";
 import { getChannelVideos } from "./utils/youtube/get_channel_videos.js";
@@ -35,7 +35,7 @@ async function processChannel(): Promise<boolean> {
 		if (shuttingDown) {
 			break;
 		}
-		if (processedVideos.includes(video.url)) {
+		if (processedVideos.includes(getYoutubeVideoKey(video.url))) {
 			console.log(`log: already processed video '${video.title}'`);
 			continue;
 		}
@@ -51,7 +51,7 @@ async function processChannel(): Promise<boolean> {
 		try {
 			await uploadToSmolish(downloaded, video, false);
 			console.info(`info: successfully published video '${video.title}'`);
-			processedVideos.push(video.url);
+			processedVideos.push(getYoutubeVideoKey(video.url));
 			await setProcessedVideos(processedVideos);
 			uploaded = true;
 			if (uploadOnce) {
