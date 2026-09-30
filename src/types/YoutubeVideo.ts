@@ -3,4 +3,5 @@ export interface YoutubeVideo {
 	description: string;
 	channel: string;
 	url: string;
+	durationSeconds?: number;
 }

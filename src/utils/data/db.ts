@@ -1,10 +1,9 @@
 import { existsSync } from "fs";
 import { mkdir, readFile, writeFile } from "fs/promises";
-import { homedir } from "os";
 import path from "path";
 
-const home = homedir();
-const processedFilePath = path.join(home, '.smolishyt', 'processed.json');
+const processedFilePath = path.join(process.cwd(), '.smolishyt', 'processed.json');
+const channelStateFilePath = path.join(process.cwd(), '.smolishyt', 'channel-state.json');
 
 export async function getProcessedVideos(): Promise<string[]> {
 	try {
@@ -13,8 +12,20 @@ export async function getProcessedVideos(): Promise<string[]> {
 		}
 
 		const fileText = await readFile(processedFilePath, 'utf8');
-		const processed: string[] = JSON.parse(fileText);
-		return processed;
+		const parsed: unknown = JSON.parse(fileText);
+		if (Array.isArray(parsed)) {
+			return parsed.filter((value): value is string => typeof value === 'string');
+		}
+		if (parsed && typeof parsed === 'object') {
+			const legacy = parsed as { videos?: unknown; processed?: unknown };
+			const values = Array.isArray(legacy.videos)
+				? legacy.videos
+				: Array.isArray(legacy.processed)
+					? legacy.processed
+					: [];
+			return values.filter((value): value is string => typeof value === 'string');
+		}
+		return [];
 	} catch (error) {
 		console.error(`error: ${(error as Error).message}`);
 		return [];
@@ -25,6 +36,41 @@ export async function setProcessedVideos(videos: string[]) {
 	try {
 		await mkdir(path.dirname(processedFilePath), { recursive: true });
 		await writeFile(processedFilePath, JSON.stringify(videos));
+	} catch (error) {
+		console.error(`error: ${(error as Error).message}`);
+	}
+}
+
+export async function getChannelFetchPages(channelId: string): Promise<number> {
+	try {
+		if (!existsSync(channelStateFilePath)) {
+			return 2;
+		}
+
+		const fileText = await readFile(channelStateFilePath, 'utf8');
+		const parsed: unknown = JSON.parse(fileText);
+		if (
+			parsed &&
+			typeof parsed === 'object' &&
+			'channelId' in parsed &&
+			'pages' in parsed &&
+			(parsed as { channelId: unknown }).channelId === channelId &&
+			Number.isSafeInteger((parsed as { pages: unknown }).pages) &&
+			(parsed as { pages: number }).pages >= 2
+		) {
+			return (parsed as { pages: number }).pages;
+		}
+		return 2;
+	} catch (error) {
+		console.error(`error: ${(error as Error).message}`);
+		return 2;
+	}
+}
+
+export async function setChannelFetchPages(channelId: string, pages: number) {
+	try {
+		await mkdir(path.dirname(channelStateFilePath), { recursive: true });
+		await writeFile(channelStateFilePath, JSON.stringify({ channelId, pages }));
 	} catch (error) {
 		console.error(`error: ${(error as Error).message}`);
 	}

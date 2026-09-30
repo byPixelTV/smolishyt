@@ -3,28 +3,30 @@
   "version": "1.0.0",
   "description": "",
   "main": "./dist/index.js",
+  "packageManager": "bun@1.4.1",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node --env-file=.env ./dist/index.js",
-    "dev": "npx tsx --env-file=.env ./src/index.ts",
-    "build": "tsc",
-    "channel:dev": "npx tsx --env-file=.env ./src/channel.ts",
-    "channel:start": "node --env-file=.env ./dist/channel.js"
+    "start": "bun --env-file=.env ./dist/index.js",
+    "dev": "bun --env-file=.env ./src/index.ts",
+    "upload": "bun --env-file=.env ./src/index.ts",
+    "build": "bunx tsc",
+    "channel:dev": "bun --env-file=.env ./src/channel.ts",
+    "channel:upload": "bun --env-file=.env ./src/channel.ts --once",
+    "channel:start": "bun --env-file=.env ./dist/channel.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@types/node": "^26.1.2",
-    "tsx": "^4.23.9",
+    "@types/node": "^26.6.3",
     "typescript": "^7.0.2"
   },
   "dependencies": {
     "get-video-duration": "^5.0.0",
     "got-scraping": "^4.2.1",
     "youtube-sr": "^4.3.12",
-    "youtubei.js": "^17.2.0",
+    "youtubei.js": "^18.1.0",
     "ytdlp-nodejs": "^3.4.5"
   }
 }

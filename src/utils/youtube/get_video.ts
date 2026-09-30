@@ -68,6 +68,7 @@ export async function getVideo(addNoise: boolean = true, queryAttempts: number =
 			description: short.description || '',
 			channel: short.channel?.name || 'Unknown Channel',
 			url,
+			durationSeconds: short.duration / 1000,
         };
     } catch (error) {
         console.error("Failed to fetch random short:", error);

@@ -18,13 +18,13 @@ export const config: SmolishConfig = {
 };
 
 export const headers: Record<string, string> = {
-	'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-	'Accept': 'application/json, text/plain, */*',
+	'User-Agent': process.env.BROWSER_USER_AGENT || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+	'Accept': 'application/json',
 	'Accept-Language': 'en-US,en;q=0.9',
-	'Sec-Ch-Ua': '"Google Chrome";v="125", "Chromium";v="125", "Not=A?Brand";v="24"',
-    'Sec-Ch-Ua-Mobile': '?0',
-    'Sec-Ch-Ua-Platform': '"Linux"',
 	'Cookie': process.env.COOKIE || '',
 	'Origin': 'https://smolish.com',
 	'Referer': 'https://smolish.com/studio',
+	'Sec-Fetch-Site': 'same-origin',
+	'Sec-Fetch-Mode': 'cors',
+	'Sec-Fetch-Dest': 'empty',
 };

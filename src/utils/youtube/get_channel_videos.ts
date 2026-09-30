@@ -1,5 +1,12 @@
 import Innertube from "youtubei.js";
 import type { YoutubeVideo } from "../../types/YoutubeVideo.js";
+import { getChannelFetchPages, setChannelFetchPages } from "../data/db.js";
+
+type ChannelVideosPage = {
+	videos?: any[];
+	has_continuation: boolean;
+	getContinuation(): Promise<ChannelVideosPage>;
+};
 
 export async function getChannelVideos(): Promise<YoutubeVideo[]> {
 	const youtube = await Innertube.create();
@@ -11,8 +18,20 @@ export async function getChannelVideos(): Promise<YoutubeVideo[]> {
 	}
 
 	const channel = await youtube.getChannel(channelId);
-	const videosTab = await channel.getShorts();
-	const videos: any[] = videosTab.videos;
+	const targetPages = await getChannelFetchPages(channelId);
+	let videosTab: ChannelVideosPage = await channel.getShorts();
+	const videos: any[] = [];
+	let page = 1;
+	while (page <= targetPages) {
+		videos.push(...(videosTab.videos || []));
+		if (page === targetPages || !videosTab.has_continuation) {
+			break;
+		}
+		page += 1;
+		console.log(`log: fetching older channel videos page ${page}/${targetPages}`);
+		videosTab = await videosTab.getContinuation();
+	}
+	await setChannelFetchPages(channelId, page + 2);
 
 	const allVideos: YoutubeVideo[] = [];
 
@@ -26,9 +45,10 @@ export async function getChannelVideos(): Promise<YoutubeVideo[]> {
 			description: description,
 			channel: channelName,
 			url: url,
+			durationSeconds: typeof video.duration?.seconds === 'number' ? video.duration.seconds : undefined,
 		});
 		console.log(`log: found video '${title}' by ${channelName}`);
 	}
 
-	return allVideos.reverse();
+	return allVideos;
 }
