@@ -39,6 +39,7 @@ async function compressVideo(inputPath: string, outputPath: string): Promise<str
     const ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg';
     const crf = process.env.VIDEO_CRF || '32';
     const audioBitrate = process.env.VIDEO_AUDIO_BITRATE || '64k';
+    const maxVideoBitrate = process.env.VIDEO_MAX_VIDEO_BITRATE || '900k';
 
     console.log('log: compressing video');
     await execFileAsync(ffmpegPath, [
@@ -49,6 +50,8 @@ async function compressVideo(inputPath: string, outputPath: string): Promise<str
         '-c:v', 'libx264',
         '-preset', 'veryfast',
         '-crf', crf,
+        '-maxrate', maxVideoBitrate,
+        '-bufsize', maxVideoBitrate,
         '-pix_fmt', 'yuv420p',
         '-c:a', 'aac',
         '-b:a', audioBitrate,
@@ -59,7 +62,8 @@ async function compressVideo(inputPath: string, outputPath: string): Promise<str
 
     const [original, compressed] = await Promise.all([stat(inputPath), stat(outputPath)]);
     console.log(`log: compression complete (${(original.size / 1024 / 1024).toFixed(2)} MB -> ${(compressed.size / 1024 / 1024).toFixed(2)} MB)`);
-    return compressed.size < original.size ? outputPath : inputPath;
+    console.log('log: using compressed video for upload');
+    return outputPath;
 }
 
 export async function downloadVideo(video: YoutubeVideo): Promise<File | null> {

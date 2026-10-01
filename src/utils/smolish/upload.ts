@@ -129,6 +129,7 @@ export async function uploadToSmolish(video: File, youtubeVideo: YoutubeVideo, e
 		const metadata = buildMetadata(youtubeVideo);
 		const buffer = await video.arrayBuffer();
 		const bytes = new Uint8Array(buffer);
+		console.log(`log: uploading prepared video '${video.name}' (${(video.size / 1024 / 1024).toFixed(2)} MB)`);
 
 		const create = await smolishRequest(
 			`${config.baseUrl}/api/videos`,

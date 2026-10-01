@@ -24,9 +24,11 @@ BINARY_PATH=
 FFMPEG_PATH=
 # Optional compression controls (higher VIDEO_CRF means smaller/lower quality)
 VIDEO_CRF=28
-VIDEO_AUDIO_BITRATE=96k
-# Source download quality (720p is smaller and usually sufficient for Shorts)
-VIDEO_QUALITY=720p
+VIDEO_AUDIO_BITRATE=64k
+# Caps video bitrate to keep account storage predictable
+VIDEO_MAX_VIDEO_BITRATE=900k
+# Source download quality (480p keeps uploads smaller while remaining watchable)
+VIDEO_QUALITY=480p
 # Videos longer than this are skipped before upload
 VIDEO_MAX_DURATION_SECONDS=60
 # Optional: path to Node.js used for the Cloudflare-compatible Smolish transport
